@@ -101,8 +101,10 @@ errors, such as calling `get` on a `Promise`, which may cause a deadlock.
 ## Exceptions
 ## Draft Proposal of the Future Trait
     trait Future[+T] {
-      /** Blocks the current thread until the Future has been completed or the
-       *  timeout has expired. If a timeout happens, an exception will be stored in the Future object.
+      
+      /**
+       * Blocks the current thread until the Future has been completed or the
+       * timeout has expired. If a timeout happens, an exception will be stored in the Future object.
        */
       def await(implicit context: ExecutionContext, timeout: Duration = ExecutionContext.timeout): Future[T]
       
@@ -112,7 +114,8 @@ errors, such as calling `get` on a `Promise`, which may cause a deadlock.
       
       def cps: ContinuationFuture[T] // We should perhaps think of a better name for this one
       
-      // transformation methods
+      // combinators
+      
       def orElse[U >: T](other: Future[U]): Future[U]
       
       def map[U](fun: T => U): Future[U]
@@ -131,22 +134,25 @@ errors, such as calling `get` on a `Promise`, which may cause a deadlock.
       
       def recover[U >: T](pf: PartialFunction[Throwable, U]): Future[U]
       
+      // accessors
+      
       /**
        * Await completion of this Future and return its value if it conforms to U's
        * erased type. Will place a ClassCastException into the Future object if the value 
        * does not conform, or a TimeoutException if it times out.
        */
-      def as[U: Manifest]: Future[U] 
+      def as[U: Manifest](implicit context: ExecutionContext, timeout: Duration = ExecutionContext.timeout): Future[U] 
       
-      // accessors
-      def foreach[U](fun: T => U): Unit
+      def foreach[U](fun: T => U)(implicit context: ExecutionContext, timeout: Duration = ExecutionContext.timeout): Unit
       
       // callback methods
+
       def onComplete(func: Future[T] => Unit): Future.this.type
       def onFailure[U](pf: PartialFunction[Throwable, U]): Future.this.type
       def onSuccess[U](pf: PartialFunction[T, U]): Future.this.type
       
     }
+
 ## Draft Proposal of the Task Trait
 
     trait Task[+T] {
@@ -155,6 +161,7 @@ errors, such as calling `get` on a `Promise`, which may cause a deadlock.
     }
 
 ## Draft Proposal of the Promise Trait
+
     trait Promise[-T] {
       def fail(e: Throwable)
       def fulfill(res: T)      
@@ -174,7 +181,7 @@ For scheduling the start of `Task`s.
 
 # References
 1. [The Task-Based Asychronous Pattern, Stephen Toub, Microsoft, April 2011][1]
-2. [Fingale Documentation][2]
+2. [Finagle Documentation][2]
 
   [1]: http://www.microsoft.com/download/en/details.aspx?id=19957        "NETAsync"
   [2]: http://twitter.github.com/scala_school/finagle.html  "Finagle"
