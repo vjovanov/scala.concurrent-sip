@@ -72,18 +72,24 @@ errors, such as calling `get` on a `Promise`, which may cause a deadlock.
       // accessors
       def foreach[U](fun: T => U): Unit
       
-      // callback methods: TBD
+      // callback methods
+      def onComplete(func: Future[T] => Unit): Future.this.type
+      def onFailure[U](pf: PartialFunction[Throwable, U]): Future.this.type
+      def onSuccess[U](pf: PartialFunction[T, U]): Future.this.type
+      
     }
 ## Draft Proposal of the Task Trait
 
     trait Task[+T] {
-      
       def future: Future[T]
-      
       def start(): Unit
-      
     }
 
+## Draft Proposal of the Promise Trait
+    trait Promise[-T] {
+      def fail(e: Throwable)
+      def fulfill(res: T)      
+    }
 
 # Migration
 ## Migration From Existing Futures
