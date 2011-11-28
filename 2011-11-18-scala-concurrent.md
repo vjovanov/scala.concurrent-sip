@@ -13,7 +13,21 @@ Redesign of `scala.concurrent` into a unified substrate for different parallel f
 ## Termination
 
 # Tasks, Futures, and Promises
+
 ## Architecture
+
+`Task`s, `Future`s, and `Promise`s are separate. In concrete implementations, they may be the same classes, 
+but this is not shown in the public API, and their exact types are hidden by the `makeTask` and `makePromise` 
+factory methods.
+
+The reasoning behind this is as follows; `Task`s are used internally by different frameworks, and therefore 
+they have no need for monadic operations like those found in `Future`s. It must also be possible to separate 
+`Task`-creation from scheduling. 
+
+Since, the "owner" of a `Promise` has produced the value to be placed within a `Future`, thus it should not be 
+necessary to call the `Future` monadic operations to access that same value. This also avoids programmer 
+errors, such as calling `get` on a `Promise`, which may cause a deadlock. 
+
 ## Cancellation
 ## Exceptions
 ## Draft Proposal of the Future Trait
@@ -57,6 +71,8 @@ Redesign of `scala.concurrent` into a unified substrate for different parallel f
       
       // accessors
       def foreach[U](fun: T => U): Unit
+      
+      // callback methods: TBD
     }
 ## Draft Proposal of the Task Trait
 
