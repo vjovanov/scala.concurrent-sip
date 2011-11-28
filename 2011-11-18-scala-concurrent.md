@@ -3,8 +3,7 @@ layout: sip
 disqus: true
 title: SIP-14 - Redesign of scala.concurrent
 ---
-Redesign of scala.concurrent into a unified substrate for different parallel frameworks
-
+Redesign of `scala.concurrent` into a unified substrate for different parallel frameworks
 
 # Introduction
 
@@ -17,7 +16,7 @@ Redesign of scala.concurrent into a unified substrate for different parallel fra
 ## Architecture
 ## Cancellation
 ## Exceptions
-## Draft proposal of Future trait
+## Draft Proposal of the Future Trait
     trait Future[+T] {
       /** Blocks the current thread until the Future has been completed or the
        *  timeout has expired. If a timeout happens, an exception will be stored in the Future object.
@@ -59,6 +58,16 @@ Redesign of scala.concurrent into a unified substrate for different parallel fra
       // accessors
       def foreach[U](fun: T => U): Unit
     }
+## Draft Proposal of the Task Trait
+
+    trait Task[+T] {
+      
+      def future: Future[T]
+      
+      def start(): Unit
+      
+    }
+
 
 # Migration
 ## Migration From Existing Futures
