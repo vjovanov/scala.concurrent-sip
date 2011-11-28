@@ -35,7 +35,9 @@ Redesign of scala.concurrent into a unified substrate for different parallel fra
       
       def map[U](fun: T => U): Future[U]
       
-      def flatMap[U](fun: T => Future[U]): Future[U]
+      def flatMap[U](fun: T => Future[U]): Future[U] 
+      
+      def flatten[U](implicit f: <:< [T, Future[U]]): Future[U]
       
       def filter(pred: T => Boolean): Future[T]
       
