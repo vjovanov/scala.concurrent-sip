@@ -99,7 +99,15 @@ errors, such as calling `get` on a `Promise`, which may cause a deadlock.
 
 ## Cancellation
 ## Exceptions
-## Draft Proposal of the Future Trait
+## The Future Trait
+
+The following specification of the `Future` trait is based on Akka's `Future` trait. The main changes compared to
+Akka are:
+
+* All blocking methods take implicit `ExecutionContext` and `Duration` arguments.
+* Methods based on continuations are moved to `ContinuationFuture`.
+* There is a synonym for `flatMap` called `andThen`.
+
     trait Future[+T] {
       
       /**
@@ -137,6 +145,24 @@ errors, such as calling `get` on a `Promise`, which may cause a deadlock.
       // accessors
       
       /**
+       * The contained value of this Future. Before this Future is completed
+       * the value will be None. After completion the value will be Some(Right(t))
+       * if it contains a valid result, or Some(Left(error)) if it contains
+       * an exception.
+       */
+      def value: Option[Either[Throwable, T]]
+
+      /**
+       * Returns the successful result of this Future if it exists.
+       */
+      def result: Option[T]
+
+      /**
+       * Returns the contained exception of this Future if it exists.
+       */
+      def exception: Option[Throwable]
+
+      /**
        * Await completion of this Future and return its value if it conforms to U's
        * erased type. Will place a ClassCastException into the Future object if the value 
        * does not conform, or a TimeoutException if it times out.
@@ -153,14 +179,14 @@ errors, such as calling `get` on a `Promise`, which may cause a deadlock.
       
     }
 
-## Draft Proposal of the Task Trait
+## The Task Trait
 
     trait Task[+T] {
       def future: Future[T]
       def start(): Unit
     }
 
-## Draft Proposal of the Promise Trait
+## The Promise Trait
 
     trait Promise[-T] {
       def fail(e: Throwable)
@@ -173,8 +199,10 @@ errors, such as calling `get` on a `Promise`, which may cause a deadlock.
 
 # Utilities
 ## Scheduler
-For scheduling the start of `Task`s.
-## TimeOut and Duration
+## Timeouts and Duration
+
+We propose to add Akka's `Duration` to package `scala.util`. It is not clear whether we need an additional `Timeout`
+type.
 
 # Evaluation
 **Goal:** Re-implement examples from the .NET Task-based Async Pattern paper \[[1][1]\], and from Finagle's documentation \[[2][2]\].
