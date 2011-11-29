@@ -85,6 +85,23 @@ Using one of these `ExecutionContext`s, a task can be created and started as fol
 
 ## Architecture
 
+There are `Task`s, `Future`s, and `Promise`s. The main idea behind these types is that there are two ways to complete
+a `Future`, by completing a `Promise`, or by executing a `Task`. `Task`s and `Promise`s are created using an
+`ExecutionContext`:
+
+    trait ExecutionContext {
+      
+      def makeTask[T](body: () => T)(implicit timeout: Duration): Task[T]
+    
+      def makePromise[T]()(implicit timeout: Duration): Promise[T]
+      
+    }
+
+A `Future` can be obtained from a `Task` or from a `Promise`:
+
+    val fut = task.future
+    val fut2 = promise.future
+
 `Task`s, `Future`s, and `Promise`s are separate. In concrete implementations, they may be the same classes, 
 but this is not shown in the public API, and their exact types are hidden by the `makeTask` and `makePromise` 
 factory methods.
@@ -93,8 +110,8 @@ The reasoning behind this is as follows; `Task`s are used internally by differen
 they have no need for monadic operations like those found in `Future`s. It must also be possible to separate 
 `Task`-creation from scheduling. 
 
-Since, the "owner" of a `Promise` has produced the value to be placed within a `Future`, thus it should not be 
-necessary to call the `Future` monadic operations to access that same value. This also avoids programmer 
+Since the owner of a `Promise` has produced the value to be placed within a `Future`, it should not be 
+necessary to call operations of the `Future` to access that same value. This also avoids programmer 
 errors, such as calling `get` on a `Promise`, which may cause a deadlock. 
 
 ## Cancellation
