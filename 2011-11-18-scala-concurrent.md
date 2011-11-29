@@ -108,6 +108,9 @@ Akka are:
 * Methods based on continuations are moved to `ContinuationFuture`.
 * There is a synonym for `flatMap` called `andThen`.
 
+Some methods are still missing, for example, a non-blocking `isComplete` method for testing whether a future has
+already been completed.
+
     trait Future[+T] {
       
       /**
