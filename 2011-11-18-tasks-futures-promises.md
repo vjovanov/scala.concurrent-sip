@@ -39,7 +39,6 @@ Since the owner of a `Promise` has produced the value to be placed within a `Fut
 necessary to call operations of the `Future` to access that same value. This also avoids programmer 
 errors, such as calling `get` on a `Promise`, which may cause a deadlock. 
 
-## Cancellation
 ## Exceptions
 ## The Future Trait
 
@@ -142,7 +141,6 @@ already been completed.
 ## Migration From Existing Futures
 
 # Utilities
-## Scheduler
 ## Timeouts and Duration
 
 We propose to add Akka's `Duration` to package `scala.util`. It is not clear whether we need an additional `Timeout`
