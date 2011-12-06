@@ -78,6 +78,9 @@ Using one of these `ExecutionContext`s, a task can be created and started as fol
 ## Defaults and Configuration
 ## Termination
 
+# Utilities
+## Scheduler
+
 # Migration (Or Examples?)
 ## Updating Other Components of scala.concurrent to Use ExecutionContexts
 
