@@ -1,7 +1,7 @@
 ---
 layout: sip
 disqus: true
-title: SIP-14 - Redesign of scala.concurrent
+title: SIP-14 - Futures and Promises
 ---
 This SIP is part of two SIPs, which together constitute a redesign of `scala.concurrent` into a unified substrate for a variety of parallel frameworks.
 This proposal focuses on futures and promises.
