@@ -6,6 +6,91 @@ title: SIP-14 - Redesign of scala.concurrent
 This SIP is part of two SIPs, which together constitute a redesign of `scala.concurrent` into a unified substrate for a variety of parallel frameworks.
 This proposal focuses on futures and promises.
 
+# Outline
+
+## Introduction h
+
+need for futures
+other frameworks developed them, we should have a unique base for all of them
+Finagle futures
+Akka futures briefly
+Scalaz futures
+Scala actors futures
+Java futures and what we want to avoid (we want read-only, p-c relationship, non-blocking, asynchronous)
+tasks, futures and promises and their motivational relationship
+execution contexts and how do they fit in
+asynchronous nature of futures - callbacks
+examples here
+combinators used to compose futures
+examples here
+blocking still possible but discouraged (blocking made difficult)
+example here
+Finagle example adapted
+
+
+## Futures a
+
+future holds a value or an exception
+creation - using the future in the package object (this forwards to the global execution context)
+callbacks
+example (of callbacks which lends itself towards functional composition)
+functional composition (semantics of propagating values and exceptions)
+example
+projections
+examples
+blocking on a future
+design decisions we took lead to best practices (blocking, callbacks + combinators)
+
+## Blocking a
+
+blockable trait
+blocking contract
+
+## Exceptions v
+
+InterruptedException
+scala.util.control.ControlThrowable
+Error
+ExecutionException for wrapping the three special types above
+FutureTimeoutException for expressing timeouts
+
+
+## Promises h
+
+Motivating example:
+
+val p = promise
+
+val producer = future {
+  val r = doSomething
+  p fulfill r
+}
+
+val consumer = future {
+  doSomethingElse
+  p.future onSuccess {
+    r => finish(r)
+  }
+}
+
+fulfilling and breaking promises
+obtaining a future from a promise
+
+
+## Migration p
+
+scala.actor.Futures?
+for clients
+
+
+## Implementing custom futures and promises p
+for library writers
+
+
+## Utils v
+Timeout, Duration
+
+
 # Tasks, Futures, and Promises
 
 ## Architecture
