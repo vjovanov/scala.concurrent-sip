@@ -28,12 +28,92 @@ example here
 Finagle example adapted
 
 
-## Futures a
+## Futures
 
-future holds a value or an exception
-creation - using the future in the package object (this forwards to the global execution context)
-callbacks
-example (of callbacks which lends itself towards functional composition)
+A future is an abstraction which represents a value which may become available at some point. A future object either holds a result of a computation or an exception in the case that the computation failed for whatever reason.
+
+The simplest way to create a future object is to invoke the `future` construct which starts an asynchronous computation and returns a future holding the result of that computation. The result becomes available once the future completes. Here is an example:
+
+    val f = future {
+      4 / 2
+    }
+
+The value 2 becomes available in the future once the computation completes. An unsuccessful computation may result in an exception. In this case, the future will hold an `ArithmeticException` instead of the value, as in the following example:
+
+    val f = future {
+      2 / 0
+    }
+
+Invoking the `future` construct uses a global execution context to start an asynchronous computation. In the case the client desires to use a custom execution context to start an asynchronous computation:
+
+    val f = customExecutionContext future {
+      4 / 2
+    }
+
+Unless the asynchronous computation was merely side-effecting, we are generally interested in the result value of the computation. To obtain a value from the future (or be thrown an exception), a client of the future would have to block until the future is completed. Although this is allowed by the `Future` API as we will show later in this document, a more preferred way to continue the computation is to register a callback on the future. This callback is called asynchronously once the future is completed. If the future has already been completed when registering the callback, then the callback may either be executed asynchronously, or sequentially on the same thread - this depends on the concrete implementation of a future.
+
+The most general for of registering a callback is the `onComplete` method, which takes a callback function from `Either[Throwable, T]` to `U`. The `onComplete` method is parametric in the return type of the callback and it discards the result of the callback. Here is an example:
+
+    val f = future {
+      4 / 2
+    }
+    
+    f onComplete {
+      case Left(t)  => println("Failure: " + t)
+      case Right(v) => println("Success: " + v)
+    }
+    
+    println("done")
+
+Above we use a partial function as a callback, since it provides a concise syntax.
+
+The `onComplete` method is general in the sense that it allows the client to handle the result of both failed and successful future computations. To handle only successful computation results, the `onSuccess` callback is used:
+
+    val f = future {
+      4 / 2
+    }
+    
+    f onSuccess {
+      result => println(result)
+    }
+
+The `onSuccess` callback is only executed if the future is completed successfully. To handle only unsuccessful computation results, the `onFailure` callback is used:
+
+    val f = future {
+      2 / 0
+    }
+    
+    f onFailure {
+      case ae: ArithmeticException => println("You're dividing by 0 again.")
+    } onSuccess {
+      x => println("I've managed to do the impossible.")
+    }
+
+The `onFailure` callback is only executed if the future fails, that is - if it contains an exception. The above example also shows that multiple callbacks can be registered with a future.
+
+There is another subtle difference between `onSuccess` and `onFailure`. While the `onSuccess` method takes a `Function1` callback, the `onFailure` method takes a `PartialFunction`. The benefits for this design decision are twofold.
+
+First, since partial functions have the `isDefinedAt` method, the `onFailure` only triggers the callback if it is defined for a particular throwable. In the following example the registered callback is never triggered:
+
+    val f = future {
+      2 / 0
+    }
+    
+    f onFailure {
+      case npe: NullPointerException => println("I'd be amazed if this printed out.")
+    }
+
+Having a regular function callback as an argument to `onFailure` would require including the default case on every usage, which is cumbersome.
+
+Second, the generalized `try-catch` block also expects a `PartialFunction` value. That means that if there are generic partial function exception handlers present in the application then they will be compatible with the `onFailure` method.
+
+The `onTimeout` method registers callbacks triggered when the future fails with a `FutureTimeoutException`. This case can also be handled by the `onFailure` method if the partial function is defined for that exception type.
+
+Note that all three latter on-callback methods can be expressed in terms of the `onComplete` method. As such they are by default implemented in the `scala.concurrent.Future` trait. Future implementations extending this trait must implement the `onComplete` method, but may choose to also override the other on-callback methods for performance reasons.
+
+The examples we've shown so far tend to lend themselves naturally towards functional composition of futures.
+
+
 functional composition (semantics of propagating values and exceptions)
 example
 projections
