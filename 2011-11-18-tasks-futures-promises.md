@@ -30,7 +30,12 @@ Finagle example adapted
 
 ## Futures
 
-A future is an abstraction which represents a value which may become available at some point. A future object either holds a result of a computation or an exception in the case that the computation failed for whatever reason.
+A future is an abstraction which represents a value which may become
+available at some point. A future object either holds a result of a
+computation or an exception in the case that the computation failed
+for whatever reason. A future is never written to or failed by the
+client of the future. It is a read-only abstraction meant to be used
+by the consumers of the value.
 
 The simplest way to create a future object is to invoke the `future` construct which starts an asynchronous computation and returns a future holding the result of that computation. The result becomes available once the future completes. Here is an example:
 
@@ -111,7 +116,69 @@ The `onTimeout` method registers callbacks triggered when the future fails with 
 
 Note that all three latter on-callback methods can be expressed in terms of the `onComplete` method. As such they are by default implemented in the `scala.concurrent.Future` trait. Future implementations extending this trait must implement the `onComplete` method, but may choose to also override the other on-callback methods for performance reasons.
 
-The examples we've shown so far tend to lend themselves naturally towards functional composition of futures.
+The examples we've shown so far tend to lend themselves naturally
+towards functional composition of futures. Assume we're given a diameter
+of a circle and we want to compute its area and circumference. To
+leverage parallelism, after computing the radius from the diameter, we
+want to compute the two in parallel. This is how we would do it using
+callbacks:
+
+    val diamet = 4.0
+	val radius = future {
+	  diamet / 2
+	}
+	radius onComplete { r =>
+	  val area = future {
+	    r * r * math.Pi
+	  }
+	  val circ = future {
+	    2 * r * math.Pi
+	  }
+	  area onSuccess println
+	  circ onSuccess println
+    }
+
+This works, but is inconvenient for two reasons. First, we have to
+use the `onComplete` callback and we have to nest the two futures
+within. Second, if the rest of the client code wants to manipulate the
+area and circumference futures, it cannot since it does not have references to these
+futures. For example, a `println` statement has to be nested within
+the `onComplete` call.
+
+For these reasons futures are mounted with combinators which allow a
+more straightforward future composition. One of the basic combinators
+is `map`, which, given a future and a mapping function for the value of
+the future, produces a new future which becomes completed with the
+mapped value once the original future is successfully completed. Lets
+rewrite the previous example using the `map` combinator:
+
+    val diamet = 4.0
+    val radius = future {
+      diam / 2
+    }
+    val area = radius map {
+      r => r * r * math.Pi
+    }
+	val circ = radius map { 
+	  r => 2 * r * math.Pi
+	}
+	area onSuccess println
+	circ onSuccess println
+
+The semantics of `map` are as follows. If the original future is
+completed successfully then the mapped future is completed with a
+mapped value from the original future. If the mapping function throws
+an exception the future is completed with that exception. If the
+original future fails with an exception then the mapped future also
+contains the same exception. These exception propagating semantics is
+present in the rest of the combinators, as well.
+
+To allow for-comprehensions futures have the `flatMap`, `filter` and
+`foreach` combinators. The `flatMap` method takes that maps the value
+into a new future `g`, and returns a future which is completed once
+`g` is completed. 
+
+
 
 
 functional composition (semantics of propagating values and exceptions)
