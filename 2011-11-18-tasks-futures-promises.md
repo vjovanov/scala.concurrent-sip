@@ -193,14 +193,15 @@ design decisions we took lead to best practices (blocking, callbacks + combinato
 blockable trait
 blocking contract
 
-## Exceptions v
+## Exceptions
 
-InterruptedException
-scala.util.control.ControlThrowable
-Error
-ExecutionException for wrapping the three special types above
-FutureTimeoutException for expressing timeouts
+When asynchronous computations go wrong `Future`s will store an instance of `Throwable` instead of the expected result. By pattern matching on the failed `Future`'s result users can handle failure appropriately. 
 
+Package `scala.concurrent` introduces following exceptions for special cases of computation failure: 
+
+1) `FutureTimeoutException` - stored when delayed computation is not completed before the deadline set for it. This exception can not contain a cause since it is triggered by an `ExecutionContext`.
+
+2) `ExecutionException` - stored when delayed computation is interrupted by `InterruptedException`, `java.lang.Error` or an `scala.util.control.ControlThrowable`. Original exceptions are stored inside (wrapped with) the `ExecutionExcetpion`. Rationale behind wrapping these exceptions in `ExecutionException` is to prevent propagation of errors that are not related to asynchronous code that is beeing executed and can affect the caller thread in the unwanted way. For example, if `InterruptedException` gets re-thrown it can terminate the invoking thread.
 
 ## Promises h
 
@@ -272,6 +273,7 @@ necessary to call operations of the `Future` to access that same value. This als
 errors, such as calling `get` on a `Promise`, which may cause a deadlock. 
 
 ## Exceptions
+
 ## The Future Trait
 
 The following specification of the `Future` trait is based on Akka's `Future` trait. The main changes compared to
